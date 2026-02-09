@@ -1,0 +1,47 @@
+# Dependencies
+node_modules/
+.venv/
+venv/
+env/
+__pycache__/
+.conda/
+
+# Build outputs
+build/
+dist/
+.next/
+out/
+target/
+*.egg-info/
+.gradle/
+
+# Git and caches
+.git/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.idea/
+.vscode/
+*.iml
+
+# Logs and temp files
+*.log
+*.tmp
+.DS_Store
+*.pyc
+*.pyo
+*.swp
+*.swo
+*~
+
+# Large binary files (uncomment if you want to exclude)
+# *.zip
+# *.tar.gz
+# *.mp4
+# *.mov
+# *.avi
+
+# OS files
+.Spotlight-V100
+.Trashes
+Thumbs.db
