@@ -1,10 +1,20 @@
 # Backup Framework
 
 ## Purpose
-Automated backup system for `/Dev/projects` to Google Drive using rclone.
-- Backs up all code and data files
-- Excludes build artifacts (node_modules, .venv, etc.)
+Automated backup system for `/Dev/projects` (code only) to Google Drive using rclone.
+- Backs up code files, excluding build artifacts (node_modules, .venv, etc.)
+- Research data and CSVs go directly to Google Drive via the desktop app (not rclone)
 - Utilizes 2TB Google One storage efficiently
+
+## Storage Strategy
+
+| Data type | Location | How |
+|---|---|---|
+| Code projects | `/Dev/projects/` (local) + `gdrive:Backups/Dev` | rclone (automated) |
+| Build artifacts | Excluded everywhere | `.rclone-exclude` |
+| Research data / CSVs | `My Drive/ST_work/...` (cloud only) | Google Drive desktop app (streamed) |
+
+**Do not save research data to `/Dev/data/` — save it directly to My Drive so it stays cloud-only and streams on demand.**
 
 ## Current Setup
 - **Source:** `/Users/hareee234/Dev/projects`
@@ -20,29 +30,32 @@ Automated backup system for `/Dev/projects` to Google Drive using rclone.
 │   ├── st-work/     ← ST research projects
 │   ├── tt/          ← other projects
 │   └── ...
-├── data/            ← large datasets, recordings, raw CSVs (NOT backed up automatically)
-│   ├── krishna-dodge-recordings/
-│   ├── gait_app_debug/
-│   ├── Head movement data collection/
-│   ├── parsed-glasses-data-collection-logs/
-│   └── Blood pressure app screenahots/
 └── backup-framework/ ← this project
 ```
 
-**Important**: `/Dev/data/` is intentionally excluded from the automatic backup sync.
-To archive a dataset to Google Drive manually:
-```bash
-rclone copy /Users/hareee234/Dev/data/<folder> gdrive:Archive/data/<folder> --progress
+## Google Drive Layout (via desktop app)
+
 ```
-To restore a dataset locally:
-```bash
-rclone copy gdrive:Archive/data/<folder> /Users/hareee234/Dev/data/<folder> --progress
+My Drive/
+├── ST_work/
+│   └── glasses-data-collection/
+│       └── breathing-controlled-timed/   ← research CSVs live here
+├── Backups/
+│   └── Dev/                              ← rclone code backups
+└── archive/
 ```
+
+**Recording software (mems studio) save path:**
+```
+/Users/hareee234/Library/CloudStorage/GoogleDrive-hareee234@gmail.com/My Drive/ST_work/glasses-data-collection/
+```
+
+**Important**: Never save recordings to the `.tmp/` path inside the Google Drive mount — that is an internal staging area and files there are not reliably persisted.
 
 ## Scripts
 
 ### `backup-to-gdrive.sh`
-Main backup script that syncs Dev folder to Google Drive.
+Main backup script that syncs `/Dev/projects` to Google Drive.
 - Automatically excludes build artifacts
 - Shows progress during sync
 - Safe to run multiple times (incremental sync)
@@ -118,9 +131,10 @@ rclone size gdrive:Backups/Dev
 2. Configure Google Drive: `rclone config` (name: `gdrive`)
 3. Clone this repo: `git clone <repo-url>`
 4. Restore all projects: `./restore-from-gdrive.sh`
+5. Sign into Google Drive desktop app for streamed data access
 
 ## Notes
 - 512GB SSD - keep only active projects locally
 - Old/inactive projects can be deleted (backed up in Google Drive)
 - Code repos also backed up to GitHub (double backup)
-- Data files (.csv, .json) only backed up to Google Drive
+- Research data (CSVs, recordings) live only in Google Drive — never clutter local disk
