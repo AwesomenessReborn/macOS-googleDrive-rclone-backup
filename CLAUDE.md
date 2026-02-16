@@ -10,7 +10,34 @@ Automated backup system for `/Dev/projects` to Google Drive using rclone.
 - **Source:** `/Users/hareee234/Dev/projects`
 - **Destination:** `gdrive:Backups/Dev` (Google Drive)
 - **Exclusions:** See `.rclone-exclude` file
-- **Automation:** Cron job (if configured) runs daily at 11 PM
+- **Automation:** Cron job runs twice daily — 12:30 PM and 11:00 PM (midday catch if Mac sleeps at night)
+
+## Dev Folder Layout
+
+```
+/Dev/
+├── projects/        ← code repos (backed up automatically to gdrive:Backups/Dev)
+│   ├── st-work/     ← ST research projects
+│   ├── tt/          ← other projects
+│   └── ...
+├── data/            ← large datasets, recordings, raw CSVs (NOT backed up automatically)
+│   ├── krishna-dodge-recordings/
+│   ├── gait_app_debug/
+│   ├── Head movement data collection/
+│   ├── parsed-glasses-data-collection-logs/
+│   └── Blood pressure app screenahots/
+└── backup-framework/ ← this project
+```
+
+**Important**: `/Dev/data/` is intentionally excluded from the automatic backup sync.
+To archive a dataset to Google Drive manually:
+```bash
+rclone copy /Users/hareee234/Dev/data/<folder> gdrive:Archive/data/<folder> --progress
+```
+To restore a dataset locally:
+```bash
+rclone copy gdrive:Archive/data/<folder> /Users/hareee234/Dev/data/<folder> --progress
+```
 
 ## Scripts
 
@@ -19,6 +46,7 @@ Main backup script that syncs Dev folder to Google Drive.
 - Automatically excludes build artifacts
 - Shows progress during sync
 - Safe to run multiple times (incremental sync)
+- Logs timestamped start/end lines to `backup.log` for auditability
 
 ### `restore-from-gdrive.sh`
 Restores projects from Google Drive backup.
