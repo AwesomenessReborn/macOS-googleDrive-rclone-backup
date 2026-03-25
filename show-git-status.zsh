@@ -14,20 +14,24 @@ typeset -a uniq_grps
 total=0 ndirty=0
 
 # Extra repos: collect separately
-typeset -a ex_names ex_counts ex_dirties
+typeset -a ex_names ex_counts ex_unpushed ex_dirties
 for er in "${extra_repos[@]}"; do
   [[ -d "$er/.git" ]] || continue
   (( total++ ))
   ch="$(git -C "$er" status --short 2>/dev/null)"
+  up="$(git -C "$er" log --oneline --branches --not --remotes 2>/dev/null | wc -l | tr -d ' ')"
   ct=0; d=0
   if [[ -n "$ch" ]]; then
     ct=$(printf '%s\n' "$ch" | wc -l | tr -d ' ')
-    d=1; (( ndirty++ ))
+    d=1
   fi
-  ex_names+=("${er:t}"); ex_counts+=("$ct"); ex_dirties+=("$d")
+  [[ "$up" -gt 0 ]] && d=1
+  [[ $d -eq 1 ]] && (( ndirty++ ))
+  ex_names+=("${er:t}"); ex_counts+=("$ct"); ex_unpushed+=("$up"); ex_dirties+=("$d")
 done
 
 # Projects tree repos
+typeset -a unpusheds
 for gd in "${(@f)$(find "$projects_dir" -maxdepth 4 -name ".git" -type d 2>/dev/null)}"; do
   (( total++ ))
   rp="${gd%/.git}"
@@ -40,13 +44,16 @@ for gd in "${(@f)$(find "$projects_dir" -maxdepth 4 -name ".git" -type d 2>/dev/
   fi
 
   ch="$(git -C "$rp" status --short 2>/dev/null)"
+  up="$(git -C "$rp" log --oneline --branches --not --remotes 2>/dev/null | wc -l | tr -d ' ')"
   ct=0; d=0
   if [[ -n "$ch" ]]; then
     ct=$(printf '%s\n' "$ch" | wc -l | tr -d ' ')
-    d=1; (( ndirty++ ))
+    d=1
   fi
+  [[ "$up" -gt 0 ]] && d=1
+  [[ $d -eq 1 ]] && (( ndirty++ ))
 
-  grps+=("$grp"); subs+=("$sub"); counts+=("$ct"); dirties+=("$d")
+  grps+=("$grp"); subs+=("$sub"); counts+=("$ct"); unpusheds+=("$up"); dirties+=("$d")
   if [[ -z "${seen[$grp]+x}" ]]; then uniq_grps+=("$grp"); seen[$grp]=1; fi
 done
 
@@ -68,10 +75,10 @@ for gi in {1..$ng}; do
   gc="├─"; gp="│    "
   [[ $last_group -eq 1 ]] && gc="└─" && gp="     "
 
-  rs=(); rc=(); rd=()
+  rs=(); rc=(); ru=(); rd=()
   for ri in {1..${#grps[@]}}; do
     if [[ "${grps[$ri]}" == "$grp" ]]; then
-      rs+=("${subs[$ri]}"); rc+=("${counts[$ri]}"); rd+=("${dirties[$ri]}")
+      rs+=("${subs[$ri]}"); rc+=("${counts[$ri]}"); ru+=("${unpusheds[$ri]}"); rd+=("${dirties[$ri]}")
     fi
   done
 
@@ -82,7 +89,13 @@ for gi in {1..$ng}; do
     sym="├─"; [[ $ri -eq $nr ]] && sym="└─"
     name="${rs[$ri]}"; [[ "$name" == "." ]] && name="$grp"
     if [[ "${rd[$ri]}" -eq 1 ]]; then
-      print -P "  ${dim}${gp}${sym}${nc} ${yellow}${name}${nc}  ${dim}(${rc[$ri]} changed)${nc}"
+      label=""
+      [[ "${rc[$ri]}" -gt 0 ]] && label="${rc[$ri]} changed"
+      if [[ "${ru[$ri]}" -gt 0 ]]; then
+        [[ -n "$label" ]] && label="${label}, "
+        label="${label}${ru[$ri]} unpushed"
+      fi
+      print -P "  ${dim}${gp}${sym}${nc} ${yellow}${name}${nc}  ${dim}(${label})${nc}"
     else
       print -P "  ${dim}${gp}${sym} ${green}✓${nc}  ${dim}${name}${nc}"
     fi
@@ -94,7 +107,13 @@ for ei in {1..$nex}; do
   sym="└─"; [[ $ei -lt $nex ]] && sym="├─"
   name="${ex_names[$ei]}"
   if [[ "${ex_dirties[$ei]}" -eq 1 ]]; then
-    print -P "  ${dim}${sym}${nc} ${yellow}${name}${nc}  ${dim}(${ex_counts[$ei]} changed)${nc}"
+    label=""
+    [[ "${ex_counts[$ei]}" -gt 0 ]] && label="${ex_counts[$ei]} changed"
+    if [[ "${ex_unpushed[$ei]}" -gt 0 ]]; then
+      [[ -n "$label" ]] && label="${label}, "
+      label="${label}${ex_unpushed[$ei]} unpushed"
+    fi
+    print -P "  ${dim}${sym}${nc} ${yellow}${name}${nc}  ${dim}(${label})${nc}"
   else
     print -P "  ${dim}${sym} ${green}✓${nc}  ${dim}${name}${nc}"
   fi
