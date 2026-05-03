@@ -10,15 +10,19 @@ Automated backup system for `/Dev/projects` (code only) to Google Drive using rc
 
 | Data type | Location | How |
 |---|---|---|
-| Code projects | `/Dev/projects/` (local) + `gdrive:Backups/Dev` | rclone (automated) |
+| Code projects | `/Dev/projects/` (local) + `gdrive:backups/dev` | rclone (automated) |
 | Build artifacts | Excluded everywhere | `.rclone-exclude` |
-| Research data / CSVs | `My Drive/ST_work/...` (cloud only) | Google Drive desktop app (streamed) |
+| Research data / CSVs | `My Drive/st-work/...` (cloud only) | Google Drive desktop app (streamed) |
+
+**`st-work` has two distinct roles by design:** `My Drive/st-work/` is the data archive (CSVs, recordings, shareable via Drive links), while `/Dev/projects/st-work/` is the code home (repos on GitHub, backed up via rclone). Same folder names appear in both but contain different content.
+
+**`backups/dev/` in the streamed mount is normal:** The rclone backup destination `gdrive:backups/dev` appears in `My Drive/backups/dev/` via the Google Drive desktop app, but files are metadata-only until opened — negligible local disk usage. Not a duplication issue.
 
 **Do not save research data to `/Dev/data/` — save it directly to My Drive so it stays cloud-only and streams on demand.**
 
 ## Current Setup
 - **Source:** `/Users/hareee234/Dev/projects`
-- **Destination:** `gdrive:Backups/Dev` (Google Drive)
+- **Destination:** `gdrive:backups/dev` (Google Drive)
 - **Exclusions:** See `.rclone-exclude` file
 - **Automation:** Cron job runs twice daily — 12:30 PM and 11:00 PM (midday catch if Mac sleeps at night)
 
@@ -26,7 +30,7 @@ Automated backup system for `/Dev/projects` (code only) to Google Drive using rc
 
 ```
 /Dev/
-├── projects/        ← code repos (backed up automatically to gdrive:Backups/Dev)
+├── projects/        ← code repos (backed up automatically to gdrive:backups/dev)
 │   ├── st-work/     ← ST research projects
 │   ├── tt/          ← other projects
 │   └── ...
@@ -37,17 +41,18 @@ Automated backup system for `/Dev/projects` (code only) to Google Drive using rc
 
 ```
 My Drive/
-├── ST_work/
+├── st-work/
 │   └── glasses-data-collection/
 │       └── breathing-controlled-timed/   ← research CSVs live here
-├── Backups/
-│   └── Dev/                              ← rclone code backups
+├── backups/
+│   ├── dev/                              ← rclone code backups
+│   └── samsung-usb/                      ← old device backup archive
 └── archive/
 ```
 
 **Recording software (mems studio) save path:**
 ```
-/Users/hareee234/Library/CloudStorage/GoogleDrive-hareee234@gmail.com/My Drive/ST_work/glasses-data-collection/
+/Users/hareee234/Library/CloudStorage/GoogleDrive-hareee234@gmail.com/My Drive/st-work/glasses-data-collection/
 ```
 
 **Important**: Never save recordings to the `.tmp/` path inside the Google Drive mount — that is an internal staging area and files there are not reliably persisted.
@@ -92,7 +97,7 @@ cd new-project
 
 ### Check What Would Be Backed Up
 ```bash
-rclone sync /Users/hareee234/Dev/projects gdrive:Backups/Dev \
+rclone sync /Users/hareee234/Dev/projects gdrive:backups/dev \
   --exclude-from /Users/hareee234/Dev/backup-framework/.rclone-exclude \
   --dry-run --verbose
 ```
@@ -118,12 +123,12 @@ Edit `.rclone-exclude` to add/remove patterns, then run backup.
 
 ### Verify Backup
 ```bash
-rclone ls gdrive:Backups/Dev | head -20
+rclone ls gdrive:backups/dev | head -20
 ```
 
 ### Check Backup Size
 ```bash
-rclone size gdrive:Backups/Dev
+rclone size gdrive:backups/dev
 ```
 
 ## Setup on New Machine

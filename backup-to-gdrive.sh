@@ -35,7 +35,7 @@ STATUS_FILE="$SCRIPT_DIR/last-backup-status"
 # Sync to Google Drive
 echo -e "${GREEN}Syncing to Google Drive...${NC}"
 rclone sync /Users/hareee234/Dev/projects \
-  gdrive:Backups/Dev \
+  gdrive:backups/dev \
   --exclude-from "$EXCLUDE_FILE" \
   --progress \
   --create-empty-src-dirs \
@@ -45,8 +45,8 @@ EXIT_CODE=$?
 
 # Write status file for terminal display
 TIMESTAMP=$(date "+%Y-%m-%d %H:%M")
-FILE_COUNT=$(rclone size gdrive:Backups/Dev --json 2>/dev/null | python3 -c "import sys,json; d=json.load(sys.stdin); print(d['count'])" 2>/dev/null || echo "?")
-TOTAL_SIZE=$(rclone size gdrive:Backups/Dev --json 2>/dev/null | python3 -c "import sys,json; d=json.load(sys.stdin); b=d['bytes']; print(f'{b/1024**3:.2f} GB')" 2>/dev/null || echo "?")
+FILE_COUNT=$(rclone size gdrive:backups/dev --json 2>/dev/null | python3 -c "import sys,json; d=json.load(sys.stdin); print(d['count'])" 2>/dev/null || echo "?")
+TOTAL_SIZE=$(rclone size gdrive:backups/dev --json 2>/dev/null | python3 -c "import sys,json; d=json.load(sys.stdin); b=d['bytes']; print(f'{b/1024**3:.2f} GB')" 2>/dev/null || echo "?")
 
 if [ $EXIT_CODE -eq 0 ]; then
   echo "status=success" > "$STATUS_FILE"
@@ -59,7 +59,7 @@ echo "size=$TOTAL_SIZE" >> "$STATUS_FILE"
 
 echo ""
 echo -e "${YELLOW}Backup statistics:${NC}"
-rclone size gdrive:Backups/Dev
+rclone size gdrive:backups/dev
 
 echo -e "${GREEN}Backup complete!${NC}"
 echo "[$(date '+%Y-%m-%d %H:%M:%S')] Backup finished"

@@ -68,8 +68,8 @@ rm -rf /Users/hareee234/Dev/projects/old-project
 
 ### Verify backup
 ```bash
-rclone ls gdrive:Backups/Dev | head -20
-rclone size gdrive:Backups/Dev
+rclone ls gdrive:backups/dev | head -20
+rclone size gdrive:backups/dev
 ```
 
 ## What Gets Backed Up?
